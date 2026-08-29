@@ -9,4 +9,6 @@ build
 *.env.test.local
 *.env.production.local
 coverage
-package-lock.json
+terraform.tfvars
+.terraform*
+terraform.tfstate

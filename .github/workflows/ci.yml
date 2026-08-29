@@ -1,0 +1,63 @@
+name: CI/CD - Task Manager
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: CI - Testes automatizados
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Subir aplicação e banco
+        run: docker compose up -d --build
+
+      - name: Aguardar aplicação iniciar
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:3000/api/health; then
+              exit 0
+            fi
+            sleep 3
+          done
+
+          docker compose logs
+          exit 1
+      - name: Rodar testes
+        run: npm test
+
+  build-and-push:
+    name: CD - Build e push da imagem Docker
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: DOCKERHUB
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DATABASE_URL }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build e push da imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DATABASE_URL }}/task-manager:latest
