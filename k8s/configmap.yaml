@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: task-manager-config
+  namespace: task-manager
+
+data:
+  DATABASE_HOST: postgres-service
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: task_manager
+  DATABASE_USER: admin
+  PORT: "3000"
+
+  POSTGRES_DB: task_manager
+  POSTGRES_USER: admin

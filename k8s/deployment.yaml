@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: task-manager
+  namespace: task-manager
+  labels:
+    app: task-manager
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: task-manager
+
+  template:
+    metadata:
+      labels:
+        app: task-manager
+
+    spec:
+      containers:
+        - name: task-manager
+
+          image: rondpin/task-manager:latest
+          imagePullPolicy: Always
+
+          envFrom:
+            - configMapRef:
+                name: task-manager-config
+
+            - secretRef:
+                name: task-manager-secret
+
+          ports:
+            - containerPort: 3000
+              name: http
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
